@@ -36,6 +36,7 @@ define({
 	"NOT_READABLE_ERR": "ファイルを読み取れません。",
 	"NO_MODIFICATION_ALLOWED_ERR": "対象ディレクトリは変更できません。",
 	"NO_MODIFICATION_ALLOWED_ERR_FILE": "ファイルを変更する権限がありません。",
+	"CONTENTS_MODIFIED_ERR": "このファイルは {APP_NAME} 以外で変更されています。",
 	"FILE_EXISTS_ERR": "ファイルまたはディレクトリは既に存在しています。",
 	"FILE": "ファイル",
 	"DIRECTORY": "ディレクトリ",
@@ -59,7 +60,7 @@ define({
 	"ERROR_DELETING_FILE_TITLE": "ファイル削除のエラー",
 	"ERROR_DELETING_FILE": "ファイルを削除する際にエラーが発生しました <span class='dialog-filename'>{0}</span>。{1}",
 	"INVALID_FILENAME_TITLE": "無効な{0}名",
-	"INVALID_FILENAME_MESSAGE": "ファイル名には、次の文字を含めることはできません : /?*:;{}<>\\| またはシステムのすべての予約語",
+	"INVALID_FILENAME_MESSAGE": "ファイル名には、次の文字を含めることはできません : {0} またはシステムの予約語すべて。",
 	"FILE_ALREADY_EXISTS": "{0} <span class='dialog-filename'>{1}</span> は既に存在しています。",
 	"ERROR_CREATING_FILE_TITLE": "{0}を作成する際にエラーが発生しました",
 	"ERROR_CREATING_FILE": "{0} <span class='dialog-filename'>{1}</span> を作成する際にエラーが発生しました。{2}",
@@ -67,8 +68,8 @@ define({
     // Application error strings
 	"ERROR_IN_BROWSER_TITLE": "{APP_NAME} は、まだブラウザー上で実行されていません。",
 	"ERROR_IN_BROWSER": "{APP_NAME} は HTML で構築されていますが、デスクトップアプリとして実行することで、ローカルファイルを編集することができます。{APP_NAME} を実行するために、<b>github.com/adobe/brackets-shell</b> リポジトリのアプリケーションシェルを使用してください。",
-
-    // FileIndexManager error string
+    
+    // ProjectManager max files error string
 	"ERROR_MAX_FILES_TITLE": "ファイルのインデックス時にエラーが発生しました。",
 	"ERROR_MAX_FILES": "インデックス化できるファイルの最大数に達しました。インデックス内でファイルを見つける機能は正しく動作しないことがあります。",
 
@@ -81,18 +82,19 @@ define({
 	"LIVE_DEVELOPMENT_RELAUNCH_TITLE": "ブラウザーに接続しています",
 	"LIVE_DEVELOPMENT_ERROR_MESSAGE": "ライブプレビューに接続するには、リモートデバッグを有効にして Chrome を再起動する必要があります。<br /><br />Chrome を再起動してリモートデバッグを有効にしますか？",
 	"LIVE_DEV_LOADING_ERROR_MESSAGE": "ライブ開発ページを読み込めません。",
-	"LIVE_DEV_NEED_HTML_MESSAGE": "ライブプレビューを起動するには、HTML ファイルを開いてください。",
+	"LIVE_DEV_NEED_HTML_MESSAGE": "ライブプレビューを起動するには、HTML ファイルを開くか、index.html ファイルがプロジェクトに含まれていることを確認してください。",
 	"LIVE_DEV_NEED_BASEURL_MESSAGE": "サーバー側ファイルでライブプレビューを起動するには、このプロジェクトのベース URL を指定する必要があります。",
 	"LIVE_DEV_SERVER_NOT_READY_MESSAGE": "ライブ開発ファイルで使用する HTTP サーバーの起動時にエラーが発生しました。もう一度実行してください。",
 	"LIVE_DEVELOPMENT_INFO_TITLE": "ライブプレビューへようこそ",
-	"LIVE_DEVELOPMENT_INFO_MESSAGE": "ライブプレビューにより {APP_NAME} がブラウザーに接続しました。ブラウザーで HTML ファイルのプレビューが起動し、コードを編集すると直ちにプレビューが更新されます。<br /><br />この初期バージョンの {APP_NAME} では、<strong>Google Chrome</strong> でのみライブプレビューが機能し、<strong>CSS ファイル</strong>の編集時にのみライブ更新が行われます。HTML または JavaScript ファイルへの変更は、保存時に自動的にリロードされます。<br /><br />(このメッセージは一度しか表示されません。)",
-	"LIVE_DEVELOPMENT_TROUBLESHOOTING": "詳しくは、<a href='#' class='clickable-link' data-href='{0}'>Live Development の接続エラーに関するトラブルシューティング</a>を参照してください。",
+	"LIVE_DEVELOPMENT_INFO_MESSAGE": "ライブプレビューにより {APP_NAME} がブラウザーに接続しました。ブラウザーで HTML ファイルのプレビューが起動し、コードを編集すると直ちにプレビューが更新されます。<br /><br />この初期バージョンの {APP_NAME} では、<strong>Google Chrome</strong> でのみライブプレビューが機能し、<strong>CSS または HTML ファイル</strong>の編集時にのみライブ更新が行われます。 JavaScript ファイルへの変更は、保存時に自動的にリロードされます。<br /><br />(このメッセージは一度しか表示されません。)",
+	"LIVE_DEVELOPMENT_TROUBLESHOOTING": "詳しくは、<a href='{0}' title='{0}'>Live Development の接続エラーに関するトラブルシューティング</a>を参照してください。",
     
 	"LIVE_DEV_STATUS_TIP_NOT_CONNECTED": "ライブプレビュー",
 	"LIVE_DEV_STATUS_TIP_PROGRESS1": "ライブプレビュー : 接続中\u2026",
 	"LIVE_DEV_STATUS_TIP_PROGRESS2": "ライブプレビュー : 初期化中\u2026",
 	"LIVE_DEV_STATUS_TIP_CONNECTED": "ライブプレビューの接続を切断します",
-	"LIVE_DEV_STATUS_TIP_OUT_OF_SYNC": "ライブプレビュー : クリックして切断 (ファイルを保存して更新)",
+	"LIVE_DEV_STATUS_TIP_OUT_OF_SYNC": "ライブプレビュー (ファイルを保存して更新)",
+	"LIVE_DEV_STATUS_TIP_SYNC_ERROR": "ライブプレビュー (シンタックスエラーのため更新されません)",
 
 	"LIVE_DEV_DETACHED_REPLACED_WITH_DEVTOOLS": "ブラウザーの開発ツールが開いているため、ライブプレビューはキャンセルされました",
 	"LIVE_DEV_DETACHED_TARGET_CLOSED": "ブラウザーでページが閉じられたため、ライブプレビューはキャンセルされました",
@@ -106,20 +108,34 @@ define({
 	"CONFIRM_FOLDER_DELETE_TITLE": "削除の確認",
 	"CONFIRM_FOLDER_DELETE": "<span class='dialog-filename'>{0}</span> フォルダーを削除してもよろしいですか？",
 	"FILE_DELETED_TITLE": "ファイルは削除されました",
+	"EXT_MODIFIED_WARNING": "<span class='dialog-filename'>{0}</span> はディスク上で変更されています。<br /><br />ファイルを保存し、これらの変更を上書きしますか。",
 	"EXT_MODIFIED_MESSAGE": "<span class='dialog-filename'>{0}</span> はディスク上で変更されていますが、{APP_NAME} 内にも保存されていない変更があります。<br /><br />どちらのバージョンを保持しますか？",
 	"EXT_DELETED_MESSAGE": "<span class='dialog-filename'>{0}</span> はディスク上で削除されていますが、{APP_NAME} 内に保存されていない変更があります。<br /><br />変更を保持しますか？",
     
+    // Generic dialog/button labels
+	"OK": "OK",
+	"CANCEL": "キャンセル",
+	"DONT_SAVE": "保存しない",
+	"SAVE": "保存",
+	"SAVE_AS": "名前を付けて保存\u2026",
+	"SAVE_AND_OVERWRITE": "上書き",
+	"DELETE": "削除",
+	"BUTTON_YES": "はい",
+	"BUTTON_NO": "いいえ",
+        
     // Find, Replace, Find in Files
-	"SEARCH_REGEXP_INFO": "正規表現による検索には /re/ シンタックスを使用してください",
 	"FIND_RESULT_COUNT": "{0} 件",
 	"FIND_RESULT_COUNT_SINGLE": "1 件",
 	"FIND_NO_RESULTS": "該当なし",
-	"WITH": "置換後の文字列",
-	"BUTTON_YES": "はい",
-	"BUTTON_NO": "いいえ",
+	"REPLACE_PLACEHOLDER": "\u2026 に置換",
 	"BUTTON_REPLACE_ALL": "すべて\u2026",
-	"BUTTON_STOP": "終了",
 	"BUTTON_REPLACE": "置換",
+	"BUTTON_NEXT": "\u25B6",
+	"BUTTON_PREV": "\u25C0",
+	"BUTTON_NEXT_HINT": "次の候補に移動",
+	"BUTTON_PREV_HINT": "前の候補に移動",
+	"BUTTON_CASESENSITIVE_HINT": "大文字と小文字を区別",
+	"BUTTON_REGEXP_HINT": "正規表現",
 
 	"OPEN_FILE": "ファイルを開く",
 	"SAVE_FILE_AS": "ファイルを保存",
@@ -129,24 +145,25 @@ define({
 	"NO_UPDATE_TITLE": "最新バージョンです",
 	"NO_UPDATE_MESSAGE": "{APP_NAME} の最新バージョンを実行中です。",
 
+    // Replace All (in single file)
 	"FIND_REPLACE_TITLE_PART1": "「",
 	"FIND_REPLACE_TITLE_PART2": "」を「",
 	"FIND_REPLACE_TITLE_PART3": "」に置き換え &mdash; {2} {0} {1}",
 
+    // Find in Files
 	"FIND_IN_FILES_TITLE_PART1": "「",
-	"FIND_IN_FILES_TITLE_PART2": "」が見つかりました",
-	"FIND_IN_FILES_TITLE_PART3": "&mdash; {0} {1} ({2} {3})",
+	"FIND_IN_FILES_TITLE_PART2": "」の検索結果",
+	"FIND_IN_FILES_TITLE_PART3": "&mdash; {3}個の{4}内で {1}件{0}{2}",
 	"FIND_IN_FILES_SCOPED": "<span class='dialog-filename'>{0}</span> 内",
 	"FIND_IN_FILES_NO_SCOPE": "プロジェクト内",
 	"FIND_IN_FILES_FILE": "ファイル",
 	"FIND_IN_FILES_FILES": "ファイル",
-	"FIND_IN_FILES_MATCH": "一致",
-	"FIND_IN_FILES_MATCHES": "一致",
+	"FIND_IN_FILES_MATCH": "が見つかりました",
+	"FIND_IN_FILES_MATCHES": "が見つかりました",
 	"FIND_IN_FILES_MORE_THAN": "以上",
 	"FIND_IN_FILES_PAGING": "{0}&mdash;{1}",
-	"FIND_IN_FILES_FILE_PATH": "ファイル : <span class='dialog-filename'>{0}</span>",
-	"FIND_IN_FILES_LINE": "行 : {0}",
-
+	"FIND_IN_FILES_FILE_PATH": "<span class='dialog-filename'>{0}</span> {2} <span class='dialog-path'>{1}</span>",
+	"FIND_IN_FILES_EXPAND_COLLAPSE": "Ctrl / Command キーをクリックしてすべて展開 / 折りたたみ",
 	"ERROR_FETCHING_UPDATE_INFO_TITLE": "更新情報を取得する際にエラーが発生しました。",
 	"ERROR_FETCHING_UPDATE_INFO_MSG": "サーバーから最新の更新情報を取得する際にエラーが発生しました。インターネット接続を確認してリトライしてください。",
 
@@ -176,11 +193,23 @@ define({
 	"STATUSBAR_INDENT_TOOLTIP_TABS": "インデントをタブに変換する",
 	"STATUSBAR_INDENT_SIZE_TOOLTIP_SPACES": "インデントに用いるスペースの数を変更",
 	"STATUSBAR_INDENT_SIZE_TOOLTIP_TABS": "タブ幅を変更",
-	"STATUSBAR_SPACES": "スペース",
-	"STATUSBAR_TAB_SIZE": "タブ幅",
+	"STATUSBAR_SPACES": "スペース :",
+	"STATUSBAR_TAB_SIZE": "タブ幅 :",
 	"STATUSBAR_LINE_COUNT_SINGULAR": "\u2014 {0} 行",
 	"STATUSBAR_LINE_COUNT_PLURAL": "\u2014 {0} 行",
+	"STATUSBAR_USER_EXTENSIONS_DISABLED": "拡張機能無効",
 
+    // CodeInspection: errors/warnings
+	"ERRORS_PANEL_TITLE_MULTIPLE": "{0} 個の問題",
+	"SINGLE_ERROR": "1 個の {0} の問題",
+	"MULTIPLE_ERRORS": "{1} 個の {0} の問題",
+	"NO_ERRORS": "{0} の問題は検出されませんでした - Good job!",
+	"NO_ERRORS_MULTIPLE_PROVIDER": "問題は検出されませんでした - Good job!",
+	"LINT_DISABLED": "Lint チェックは使用できません",
+	"NO_LINT_AVAILABLE": "{0} に使用できる Lint チェッカーがありません",
+	"NOTHING_TO_LINT": "Lint チェックするファイルがありません",
+    
+    
     /**
      * Command Name Constants
      */
@@ -192,14 +221,18 @@ define({
 	"CMD_FILE_NEW_FOLDER": "新しいフォルダー",
 	"CMD_FILE_OPEN": "開く\u2026",
 	"CMD_ADD_TO_WORKING_SET": "ワーキングセットに追加する",
+	"CMD_OPEN_DROPPED_FILES": "ドロップしたファイルを開く",
 	"CMD_OPEN_FOLDER": "フォルダーを開く\u2026",
 	"CMD_FILE_CLOSE": "閉じる",
 	"CMD_FILE_CLOSE_ALL": "すべて閉じる",
+	"CMD_FILE_CLOSE_LIST": "リストを閉じる",
+	"CMD_FILE_CLOSE_OTHERS": "他をすべて閉じる",
+	"CMD_FILE_CLOSE_ABOVE": "上をすべて閉じる",
+	"CMD_FILE_CLOSE_BELOW": "下をすべて閉じる",
 	"CMD_FILE_SAVE": "保存",
 	"CMD_FILE_SAVE_ALL": "すべて保存",
 	"CMD_FILE_SAVE_AS": "名前を付けて保存\u2026",
 	"CMD_LIVE_FILE_PREVIEW": "ライブプレビュー",
-	"CMD_LIVE_HIGHLIGHT": "ライブプレビューハイライト",
 	"CMD_PROJECT_SETTINGS": "プロジェクト設定\u2026",
 	"CMD_FILE_RENAME": "ファイル名変更",
 	"CMD_FILE_DELETE": "削除",
@@ -220,6 +253,7 @@ define({
 	"CMD_SELECT_ALL": "すべて選択",
 	"CMD_SELECT_LINE": "行の選択",
 	"CMD_FIND": "検索",
+	"CMD_FIND_FIELD_PLACEHOLDER": "検索\u2026",
 	"CMD_FIND_IN_FILES": "ファイルを横断して検索",
 	"CMD_FIND_IN_SUBTREE": "検索先\u2026",
 	"CMD_FIND_NEXT": "次を検索",
@@ -250,6 +284,8 @@ define({
 	"CMD_TOGGLE_LINE_NUMBERS": "行番号",
 	"CMD_TOGGLE_ACTIVE_LINE": "アクティブな行をハイライト",
 	"CMD_TOGGLE_WORD_WRAP": "折り返し",
+	"CMD_LIVE_HIGHLIGHT": "ライブプレビューハイライト",
+	"CMD_VIEW_TOGGLE_INSPECTION": "保存時にファイルを Lint チェック",
 	"CMD_SORT_WORKINGSET_BY_ADDED": "追加日時順",
 	"CMD_SORT_WORKINGSET_BY_NAME": "名前順",
 	"CMD_SORT_WORKINGSET_BY_TYPE": "種類順",
@@ -260,10 +296,12 @@ define({
 	"CMD_QUICK_OPEN": "クイックオープン",
 	"CMD_GOTO_LINE": "行に移動",
 	"CMD_GOTO_DEFINITION": "定義をクイック検索",
+	"CMD_GOTO_FIRST_PROBLEM": "最初のエラーまたは警告に移動",
 	"CMD_TOGGLE_QUICK_EDIT": "クイック編集",
 	"CMD_TOGGLE_QUICK_DOCS": "クイックドキュメント",
 	"CMD_QUICK_EDIT_PREV_MATCH": "前の候補に移動",
 	"CMD_QUICK_EDIT_NEXT_MATCH": "次の候補に移動",
+	"CMD_CSS_QUICK_EDIT_NEW_RULE": "新規ルール",
 	"CMD_NEXT_DOC": "次の文書",
 	"CMD_PREV_DOC": "前の文書",
 	"CMD_SHOW_IN_TREE": "ファイルツリー内で表示",
@@ -279,33 +317,23 @@ define({
 	"CMD_SHOW_EXTENSIONS_FOLDER": "拡張機能のフォルダーを開く",
 	"CMD_TWITTER": "Twitter で {TWITTER_NAME} をフォロー",
 	"CMD_ABOUT": "{APP_TITLE} について",
-
-
-    // Special commands invoked by the native shell
-	"CMD_CLOSE_WINDOW": "ウィンドウを閉じる",
-	"CMD_ABORT_QUIT": "強制終了する",
-	"CMD_BEFORE_MENUPOPUP": "ポップアップメニュー表示前",
+	"CMD_OPEN_PREFERENCES": "環境設定ファイルを開く",
 
     // Strings for main-view.html
 	"EXPERIMENTAL_BUILD": "試験ビルド",
 	"DEVELOPMENT_BUILD": "開発ビルド",
-	"OK": "OK",
-	"DONT_SAVE": "保存しない",
-	"SAVE": "保存",
-	"CANCEL": "キャンセル",
-	"DELETE": "削除",
 	"RELOAD_FROM_DISK": "ディスクから再読み込み",
 	"KEEP_CHANGES_IN_EDITOR": "エディター内の変更を保持する",
 	"CLOSE_DONT_SAVE": "保存せずに閉じる",
 	"RELAUNCH_CHROME": "Chrome を再起動",
 	"ABOUT": "このソフトウェアについて",
 	"CLOSE": "閉じる",
-	"ABOUT_TEXT_LINE1": "スプリント {VERSION_MINOR} {BUILD_TYPE} {VERSION}",
-	"ABOUT_TEXT_LINE3": "Notices, terms and conditions pertaining to third party software are located at <a href='#' class='clickable-link' data-href='{ADOBE_THIRD_PARTY}'>{ADOBE_THIRD_PARTY}</a> and incorporated by reference herein.",
-	"ABOUT_TEXT_LINE4": "ドキュメントとソースコードは <a href='#' class='clickable-link' data-href='https://github.com/adobe/brackets/'>https://github.com/adobe/brackets/</a> から入手できます。",
+	"ABOUT_TEXT_LINE1": "sprint {VERSION_MINOR} {BUILD_TYPE} {VERSION}",
+	"ABOUT_TEXT_LINE3": "Notices, terms and conditions pertaining to third party software are located at <a href='{ADOBE_THIRD_PARTY}'>{ADOBE_THIRD_PARTY}</a> and incorporated by reference herein.",
+	"ABOUT_TEXT_LINE4": "ドキュメントとソースコードは <a href='https://github.com/adobe/brackets/'>https://github.com/adobe/brackets/</a> から入手できます。",
 	"ABOUT_TEXT_LINE5": "\u2764 および JavaScript を使用して次の人によって作成されました :",
 	"ABOUT_TEXT_LINE6": "多くの人々 (ただし、人物データの読み込みに問題が発生しています)。",
-	"ABOUT_TEXT_WEB_PLATFORM_DOCS": "Web Platform Docs and the Web Platform graphical logo are licensed under a Creative Commons Attribution license, <a href='#' class='clickable-link' data-href='{WEB_PLATFORM_DOCS_LICENSE}'>CC-BY 3.0 Unported</a>.",
+	"ABOUT_TEXT_WEB_PLATFORM_DOCS": "Web Platform Docs and the Web Platform graphical logo are licensed under a Creative Commons Attribution license, <a href='{WEB_PLATFORM_DOCS_LICENSE}'>CC-BY 3.0 Unported</a>.",
 	"UPDATE_NOTIFICATION_TOOLTIP": "{APP_NAME} の新しいビルドを利用できます。詳細はここをクリックしてください。",
 	"UPDATE_AVAILABLE_TITLE": "利用可能なアップデートがあります",
 	"UPDATE_MESSAGE": "{APP_NAME} の新しいビルドが利用できます。新機能の一部を以下にご紹介します :",
@@ -317,7 +345,10 @@ define({
 	"BASEURL_ERROR_SEARCH_DISALLOWED": "ベース URL には、「{0}」のような検索パラメーターは使用できません。",
 	"BASEURL_ERROR_HASH_DISALLOWED": "ベース URL には、「{0}」のようなハッシュ記号は使用できません。",
 	"BASEURL_ERROR_INVALID_CHAR": "「{0}」のような特殊文字は、パーセントエンコーディングする必要があります。",
-	"BASEURL_ERROR_UNKOWN_ERROR": "ベース URL の解析中に不明なエラーが発生しました",
+	"BASEURL_ERROR_UNKNOWN_ERROR": "ベース URL の解析中に不明なエラーが発生しました",
+    
+    // CSS Quick Edit
+	"BUTTON_NEW_RULE": "新規ルール",
     
     // Extension Management strings
 	"INSTALL": "インストール",
@@ -326,6 +357,7 @@ define({
 	"OVERWRITE": "上書き",
 	"CANT_REMOVE_DEV": "dev フォルダーの拡張機能は手動で削除する必要があります。",
 	"CANT_UPDATE": "アップデートはこのバージョンの {APP_NAME} と互換性がありません。",
+	"CANT_UPDATE_DEV": "dev フォルダーの拡張機能は自動的に更新されません。",
 	"INSTALL_EXTENSION_TITLE": "拡張機能をインストール",
 	"UPDATE_EXTENSION_TITLE": "拡張機能を更新",
 	"INSTALL_EXTENSION_LABEL": "拡張機能の URL",
@@ -366,28 +398,31 @@ define({
 	"EXTENSION_DATE": "日付",
 	"EXTENSION_INCOMPATIBLE_NEWER": "この拡張機能には新しいバージョンの {APP_NAME} が必要です。",
 	"EXTENSION_INCOMPATIBLE_OLDER": "この拡張機能は現在、古いバージョンの {APP_NAME} でしか動作しません。",
+	"EXTENSION_LATEST_INCOMPATIBLE_NEWER": "この拡張機能のバージョン {0} には {APP_NAME} の新しいバージョンが必要です。ただし、以前のバージョン {1} をインストールすることができます。",
+	"EXTENSION_LATEST_INCOMPATIBLE_OLDER": "この拡張機能のバージョン {0} は {APP_NAME} の古いバージョンでのみ動作します。ただし、以前のバージョン {1} をインストールすることができます。",
 	"EXTENSION_NO_DESCRIPTION": "説明なし",
 	"EXTENSION_MORE_INFO": "詳細情報...",
 	"EXTENSION_ERROR": "拡張機能のエラー",
 	"EXTENSION_KEYWORDS": "キーワード",
 	"EXTENSION_INSTALLED": "インストール完了",
-	"EXTENSION_UPDATE_INSTALLED": "この拡張機能のアップデートがダウンロードされました。{APP_NAME} を終了したときにインストールされます。",
+	"EXTENSION_UPDATE_INSTALLED": "この拡張機能のアップデートがダウンロードされました。{APP_NAME} のリロード後にインストールされます。",
 	"EXTENSION_SEARCH_PLACEHOLDER": "検索",
 	"EXTENSION_MORE_INFO_LINK": "詳細",
 	"BROWSE_EXTENSIONS": "拡張機能を探す",
 	"EXTENSION_MANAGER_REMOVE": "拡張機能を削除",
-	"EXTENSION_MANAGER_REMOVE_ERROR": "1 つ以上の拡張機能 ({0}) を削除できません。{APP_NAME} が終了中です。",
+	"EXTENSION_MANAGER_REMOVE_ERROR": "1 つ以上の拡張機能 ({0}) を削除できません。{APP_NAME} がリロード中です。",
 	"EXTENSION_MANAGER_UPDATE": "拡張機能を更新",
-	"EXTENSION_MANAGER_UPDATE_ERROR": "1 つ以上の拡張機能 ({0}) を更新できません。{APP_NAME} が終了中です。",
+	"EXTENSION_MANAGER_UPDATE_ERROR": "1 つ以上の拡張機能 ({0}) を更新できません。{APP_NAME} がリロード中です。",
 	"MARKED_FOR_REMOVAL": "削除予定",
 	"UNDO_REMOVE": "取り消し",
 	"MARKED_FOR_UPDATE": "更新予定",
 	"UNDO_UPDATE": "取り消し",
-	"CHANGE_AND_QUIT_TITLE": "拡張機能を変更",
-	"CHANGE_AND_QUIT_MESSAGE": "更新予定または削除予定の拡張機能を更新または削除するには、{APP_NAME} を一度終了して再起動する必要があります。未保存の変更を保存するかどうか確認されます。",
-	"REMOVE_AND_QUIT": "拡張機能を削除して終了",
-	"CHANGE_AND_QUIT": "拡張機能を変更して終了",
-	"UPDATE_AND_QUIT": "拡張機能を更新して終了",
+	"CHANGE_AND_RELOAD_TITLE": "拡張機能を変更",
+	"CHANGE_AND_RELOAD_MESSAGE": "更新予定または削除予定の拡張機能を更新または削除するには、{APP_NAME} をリロードする必要があります。未保存の変更を保存するかどうか確認されます。",
+	"REMOVE_AND_RELOAD": "拡張機能を削除してリロード",
+	"CHANGE_AND_RELOAD": "拡張機能を変更してリロード",
+	"UPDATE_AND_RELOAD": "拡張機能を更新してリロード",
+	"PROCESSING_EXTENSIONS": "拡張機能の変更を処理中\u2026",
 	"EXTENSION_NOT_INSTALLED": "インストールされていなかったため、拡張機能 {0} を削除できませんでした。",
 	"NO_EXTENSIONS": "インストールされている拡張機能はまだありません。<br>上の「入手可能」タブをクリックしてインストールしてください。",
 	"NO_EXTENSION_MATCHES": "検索条件に一致する拡張機能がありません。",
@@ -396,50 +431,40 @@ define({
 	"EXTENSIONS_AVAILABLE_TITLE": "入手可能",
 	"EXTENSIONS_UPDATES_TITLE": "アップデート",
     
+	"INLINE_EDITOR_NO_MATCHES": "一致するものがありません。",
+	"CSS_QUICK_EDIT_NO_MATCHES": "選択に一致する既存の CSS ルールがありません。<br>「新規ルール」をクリックしてルールを作成してください。",
+	"CSS_QUICK_EDIT_NO_STYLESHEETS": "プロジェクトにはスタイルシートがありません。<br>スタイルシートを作成して CSS ルールに追加してください。",
+    
     /**
      * Unit names
      */
 
 	"UNIT_PIXELS": "ピクセル",
-    
+
     // extensions/default/DebugCommands
 	"DEBUG_MENU": "デバッグ",
 	"CMD_SHOW_DEV_TOOLS": "開発者ツールを表示",
-	"CMD_REFRESH_WINDOW": "{APP_NAME} をリロード",
+	"CMD_REFRESH_WINDOW": "拡張機能付きでリロード",
+	"CMD_RELOAD_WITHOUT_USER_EXTS": "拡張機能なしでリロード",
 	"CMD_NEW_BRACKETS_WINDOW": "新しい {APP_NAME} ウィンドウ",
 	"CMD_SWITCH_LANGUAGE": "言語を切り替える",
 	"CMD_RUN_UNIT_TESTS": "テストを実行",
 	"CMD_SHOW_PERF_DATA": "パフォーマンスデータを表示",
-	"CMD_ENABLE_NODE_DEBUGGER": "ノードデバッガーを有効にする",
-	"CMD_LOG_NODE_STATE": "ノードの状態をコンソールに記録",
-	"CMD_RESTART_NODE": "ノードを再起動",
+	"CMD_ENABLE_NODE_DEBUGGER": "Node Debugger を有効にする",
+	"CMD_LOG_NODE_STATE": "Node の状態をコンソールに記録",
+	"CMD_RESTART_NODE": "Node を再起動",
     
 	"LANGUAGE_TITLE": "言語を切り替える",
 	"LANGUAGE_MESSAGE": "言語 :",
 	"LANGUAGE_SUBMIT": "{APP_NAME} をリロード",
 	"LANGUAGE_CANCEL": "キャンセル",
-	"LANGUAGE_SYSTEM_DEFAULT": "デフォルトのシステム",
+	"LANGUAGE_SYSTEM_DEFAULT": "システムのデフォルト",
     
-    /**
-     * Locales
-     */
-	"LOCALE_CS": "チェコ語",
-	"LOCALE_DE": "ドイツ語",
-	"LOCALE_EN": "英語",
-	"LOCALE_ES": "スペイン語",
-	"LOCALE_FI": "フィンランド語",
-	"LOCALE_FR": "フランス語",
-	"LOCALE_IT": "イタリア語",
-	"LOCALE_JA": "日本語",
-	"LOCALE_NB": "ノルウェー語",
-	"LOCALE_PL": "ポーランド語",
-	"LOCALE_PT_BR": "ポルトガル語 (ブラジル)",
-	"LOCALE_PT_PT": "ポルトガル語",
-	"LOCALE_RU": "ロシア語",
-	"LOCALE_SV": "スウェーデン語",
-	"LOCALE_TR": "トルコ語",
-	"LOCALE_ZH_CN": "中国語 (簡体字)",
-	"LOCALE_HU": "ハンガリー語",
+    // extensions/default/InlineTimingFunctionEditor
+	"INLINE_TIMING_EDITOR_TIME": "時間",
+	"INLINE_TIMING_EDITOR_PROGRESSION": "進行",
+	"BEZIER_EDITOR_INFO": "<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 選択したポイントを移動<br><kbd class='text'>Shift</kbd> 10 単位ずつ移動<br><kbd class='text'>Tab</kbd> ポイントを切り替え",
+	"STEPS_EDITOR_INFO": "<kbd>↑</kbd><kbd>↓</kbd> 手順を増減<br><kbd>←</kbd><kbd>→</kbd> 「開始」または「終了」",
     
     // extensions/default/InlineColorEditor
 	"COLOR_EDITOR_CURRENT_COLOR_SWATCH_TIP": "現在の色",
@@ -454,18 +479,15 @@ define({
 	"CMD_JUMPTO_DEFINITION": "定義にジャンプ",
 	"CMD_SHOW_PARAMETER_HINT": "パラメーターヒントを表示",
 	"NO_ARGUMENTS": "<パラメーターがありません>",
-
+    
     // extensions/default/JSLint
-	"CMD_JSLINT": "JSLint を有効にする",
-	"CMD_JSLINT_FIRST_ERROR": "最初の JSLint エラーに移動",
-	"JSLINT_ERRORS": "JSLint エラー",
-	"JSLINT_ERROR_INFORMATION": "1 個の JSLint エラーがあります",
-	"JSLINT_ERRORS_INFORMATION": "{0} 個の JSLint エラーがあります",
-	"JSLINT_NO_ERRORS": "JSLint エラーはありません - Good job!",
-	"JSLINT_DISABLED": "JSLint は無効か、現在のファイルには実行されません",
+	"JSLINT_NAME": "JSLint",
     
     // extensions/default/QuickView
 	"CMD_ENABLE_QUICK_VIEW": "ホバー・クイックビュー",
+    
+    // extensions/default/RecentProjects
+	"CMD_TOGGLE_RECENT_PROJECTS": "最近使用したプロジェクト",
     
     // extensions/default/WebPlatformDocs
 	"DOCS_MORE_LINK": "詳細"

@@ -173,7 +173,7 @@ define(function (require, exports, module) {
     };
        
     /**
-     * Returns a list of availble CSS protertyname or -value hints if possible for the current
+     * Returns a list of availble CSS propertyname or -value hints if possible for the current
      * editor context. 
      * 
      * @param {Editor} implicitChar 
@@ -181,15 +181,20 @@ define(function (require, exports, module) {
      * that represents the last insertion and that indicates an implicit
      * hinting request.
      *
-     * @return {{hints: Array.<string|jQueryObject>, match: string, 
-     *      selectInitial: boolean}}
+     * @return {jQuery.Deferred|{
+     *              hints: Array.<string|jQueryObject>,
+     *              match: string,
+     *              selectInitial: boolean,
+     *              handleWideResults: boolean}}
      * Null if the provider wishes to end the hinting session. Otherwise, a
-     * response object that provides 
+     * response object that provides:
      * 1. a sorted array hints that consists of strings
-     * 2. a string match that is used by the manager to emphasize matching 
-     *    substrings when rendering the hint list 
-     * 3. a boolean that indicates whether the first result, if one exists, should be 
-     *    selected by default in the hint list window.
+     * 2. a string match that is used by the manager to emphasize matching
+     *    substrings when rendering the hint list
+     * 3. a boolean that indicates whether the first result, if one exists,
+     *    should be selected by default in the hint list window.
+     * 4. handleWideResults, a boolean (or undefined) that indicates whether
+     *    to allow result string to stretch width of display.
      */
     CssPropHints.prototype.getHints = function (implicitChar) {
         this.cursor = this.editor.getCursorPos();
@@ -204,14 +209,14 @@ define(function (require, exports, module) {
             selectInitial = false;
             
         
-        if (this.primaryTriggerKeys.indexOf(implicitChar) !== -1) {
-            selectInitial = true;
-        }
-        
         // Clear the exclusion if the user moves the cursor with left/right arrow key.
         this.updateExclusion(true);
-
+        
         if (context === CSSUtils.PROP_VALUE) {
+            
+            // Always select initial value
+            selectInitial = true;
+            
             // When switching from a NAME to a VALUE context, restart the session
             // to give other more specialized providers a chance to intervene.
             if (lastContext === CSSUtils.PROP_NAME) {
@@ -255,6 +260,12 @@ define(function (require, exports, module) {
                 selectInitial: selectInitial
             };
         } else if (context === CSSUtils.PROP_NAME) {
+            
+            // Select initial property if anything has been typed
+            if (this.primaryTriggerKeys.indexOf(implicitChar) !== -1 || needle !== "") {
+                selectInitial = true;
+            }
+            
             lastContext = CSSUtils.PROP_NAME;
             needle = needle.substr(0, this.info.offset);
             result = $.map(properties, function (pvalues, pname) {
@@ -266,7 +277,8 @@ define(function (require, exports, module) {
             return {
                 hints: result,
                 match: needle,
-                selectInitial: selectInitial
+                selectInitial: selectInitial,
+                handleWideResults: false
             };
         }
         return null;
@@ -305,7 +317,7 @@ define(function (require, exports, module) {
             if (this.info.name.length === 0 || CodeHintManager.hasValidExclusion(this.exclusion, textAfterCursor)) {
                 // It's a new insertion, so append a colon and set keepHints
                 // to show property value hints.
-                hint += ":";
+                hint += ": ";
                 end.ch = start.ch;
                 end.ch += offset;
                     
@@ -330,12 +342,12 @@ define(function (require, exports, module) {
                     // before we locate the colon following it.
                     TokenUtils.moveNextToken(ctx);
                 }
-                if (TokenUtils.moveSkippingWhitespace(TokenUtils.moveNextToken, ctx) && ctx.token.string === ":") {
+                if (TokenUtils.moveSkippingWhitespace(TokenUtils.moveNextToken, ctx) && ctx.token.string === ": ") {
                     adjustCursor = true;
                     newCursor = { line: cursor.line,
                                   ch: cursor.ch + (hint.length - this.info.name.length) };
                 } else {
-                    hint += ":";
+                    hint += ": ";
                 }
             }
         } else {
@@ -373,7 +385,7 @@ define(function (require, exports, module) {
     
     AppInit.appReady(function () {
         var cssPropHints = new CssPropHints();
-        CodeHintManager.registerHintProvider(cssPropHints, ["css"], 0);
+        CodeHintManager.registerHintProvider(cssPropHints, ["css", "scss", "less"], 0);
         
         // For unit testing
         exports.cssPropHintProvider = cssPropHints;

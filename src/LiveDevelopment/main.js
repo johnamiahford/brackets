@@ -1,24 +1,24 @@
 /*
  * Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
- *  
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- *  
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *  
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * 
+ *
  */
 
 
@@ -52,7 +52,6 @@ define(function main(require, exports, module) {
         ExtensionUtils      = require("utils/ExtensionUtils"),
         StringUtils         = require("utils/StringUtils");
 
-    var prefs;
     var params = new UrlParams();
     var config = {
         experimental: false, // enable experimental features
@@ -69,10 +68,17 @@ define(function main(require, exports, module) {
     };
     var _checkMark = "✓"; // Check mark character
     // Status labels/styles are ordered: error, not connected, progress1, progress2, connected.
-    var _statusTooltip = [Strings.LIVE_DEV_STATUS_TIP_NOT_CONNECTED, Strings.LIVE_DEV_STATUS_TIP_NOT_CONNECTED,
-                          Strings.LIVE_DEV_STATUS_TIP_PROGRESS1, Strings.LIVE_DEV_STATUS_TIP_PROGRESS2,
-                          Strings.LIVE_DEV_STATUS_TIP_CONNECTED, Strings.LIVE_DEV_STATUS_TIP_OUT_OF_SYNC];  // Status indicator tooltip
-    var _statusStyle = ["warning", "", "info", "info", "success", "out-of-sync"];  // Status indicator's CSS class
+    var _statusTooltip = [
+        Strings.LIVE_DEV_STATUS_TIP_NOT_CONNECTED,
+        Strings.LIVE_DEV_STATUS_TIP_NOT_CONNECTED,
+        Strings.LIVE_DEV_STATUS_TIP_PROGRESS1,
+        Strings.LIVE_DEV_STATUS_TIP_PROGRESS2,
+        Strings.LIVE_DEV_STATUS_TIP_CONNECTED,
+        Strings.LIVE_DEV_STATUS_TIP_OUT_OF_SYNC,
+        Strings.LIVE_DEV_STATUS_TIP_SYNC_ERROR
+    ];
+
+    var _statusStyle = ["warning", "", "info", "info", "success", "out-of-sync", "sync-error"];  // Status indicator's CSS class
     var _allStatusStyles = _statusStyle.join(" ");
 
     var _$btnGoLive; // reference to the GoLive button
@@ -118,8 +124,8 @@ define(function main(require, exports, module) {
         if (LiveDevelopment.status >= LiveDevelopment.STATUS_CONNECTING) {
             LiveDevelopment.close();
         } else {
-            if (!params.get("skipLiveDevelopmentInfo") && !prefs.getValue("afterFirstLaunch")) {
-                prefs.setValue("afterFirstLaunch", "true");
+            if (!params.get("skipLiveDevelopmentInfo") && !PreferencesManager.getViewState("livedev.afterFirstLaunch")) {
+                PreferencesManager.setViewState("livedev.afterFirstLaunch", "true");
                 Dialogs.showModalDialog(
                     DefaultDialogs.DIALOG_ID_INFO,
                     Strings.LIVE_DEVELOPMENT_INFO_TITLE,
@@ -135,7 +141,7 @@ define(function main(require, exports, module) {
 
     /** Called on status change */
     function _showStatusChangeReason(reason) {
-        // Destroy the previous twipsy (options are not updated otherwise)    
+        // Destroy the previous twipsy (options are not updated otherwise)
         _$btnGoLive.twipsy("hide").removeData("twipsy");
         
         // If there was no reason or the action was an explicit request by the user, don't show a twipsy
@@ -171,7 +177,7 @@ define(function main(require, exports, module) {
         });
         $(LiveDevelopment).on("statusChange", function statusChange(event, status, reason) {
             // status starts at -1 (error), so add one when looking up name and style
-            // See the comments at the top of LiveDevelopment.js for details on the 
+            // See the comments at the top of LiveDevelopment.js for details on the
             // various status codes.
             _setLabel(_$btnGoLive, null, _statusStyle[status + 1], _statusTooltip[status + 1]);
             _showStatusChangeReason(reason);
@@ -188,7 +194,7 @@ define(function main(require, exports, module) {
     function _setupGoLiveMenu() {
         $(LiveDevelopment).on("statusChange", function statusChange(event, status) {
             // Update the checkmark next to 'Live Preview' menu item
-            // Add checkmark when status is STATUS_ACTIVE; otherwise remove it 
+            // Add checkmark when status is STATUS_ACTIVE; otherwise remove it
             CommandManager.get(Commands.FILE_LIVE_FILE_PREVIEW).setChecked(status === LiveDevelopment.STATUS_ACTIVE);
             CommandManager.get(Commands.FILE_LIVE_HIGHLIGHT).setEnabled(status === LiveDevelopment.STATUS_ACTIVE);
         });
@@ -206,7 +212,7 @@ define(function main(require, exports, module) {
         } else {
             LiveDevelopment.hideHighlight();
         }
-        prefs.setValue("highlight", config.highlight);
+        PreferencesManager.setViewState("livedev.highlight", config.highlight);
     }
     
     /** Setup window references to useful LiveDevelopment modules */
@@ -249,11 +255,18 @@ define(function main(require, exports, module) {
     });
     
     // init prefs
-    prefs = PreferencesManager.getPreferenceStorage(module, {highlight: true});
-    //TODO: Remove preferences migration code
-    PreferencesManager.handleClientIdChange(prefs, "com.adobe.brackets.live-development");
+    PreferencesManager.stateManager.definePreference("livedev.highlight", "boolean", true)
+        .on("change", function () {
+            config.highlight = PreferencesManager.getViewState("livedev.highlight");
+            _updateHighlightCheckmark();
+        });
     
-    config.highlight = prefs.getValue("highlight");
+    PreferencesManager.convertPreferences(module, {
+        "highlight": "user livedev.highlight",
+        "afterFirstLaunch": "user livedev.afterFirstLaunch"
+    }, true);
+    
+    config.highlight = PreferencesManager.getViewState("livedev.highlight");
    
     // init commands
     CommandManager.register(Strings.CMD_LIVE_FILE_PREVIEW,  Commands.FILE_LIVE_FILE_PREVIEW, _handleGoLiveCommand);

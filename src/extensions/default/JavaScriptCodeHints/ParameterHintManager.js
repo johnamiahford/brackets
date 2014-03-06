@@ -26,13 +26,14 @@
 
 define(function (require, exports, module) {
     "use strict";
-
+    
+    var _ = brackets.getModule("thirdparty/lodash");
+    
     var Commands        = brackets.getModule("command/Commands"),
         CommandManager  = brackets.getModule("command/CommandManager"),
         KeyEvent        = brackets.getModule("utils/KeyEvent"),
         Menus           = brackets.getModule("command/Menus"),
         Strings         = brackets.getModule("strings"),
-        StringUtils     = brackets.getModule("utils/StringUtils"),
         HintsUtils2     = require("HintUtils2"),
         ScopeManager    = require("ScopeManager"),
         Session         = require("Session");
@@ -148,17 +149,17 @@ define(function (require, exports, module) {
         function appendParameter(param, index) {
             if (hints.currentIndex === index) {
                 $hintContent.append($("<span>")
-                    .append(StringUtils.htmlEscape(param))
+                    .append(_.escape(param))
                     .addClass("current-parameter"));
             } else {
-                $hintContent.append(StringUtils.htmlEscape(param));
+                $hintContent.append(_.escape(param));
             }
         }
 
         if (hints.parameters.length > 0) {
             HintsUtils2.formatParameterHint(hints.parameters, appendSeparators, appendParameter);
         } else {
-            $hintContent.append(StringUtils.htmlEscape(Strings.NO_ARGUMENTS));
+            $hintContent.append(_.escape(Strings.NO_ARGUMENTS));
         }
     }
 
@@ -297,6 +298,29 @@ define(function (require, exports, module) {
     }
 
     /**
+     * Pop up a function hint on the line above the caret position if the character before
+     *      the current cursor is an open parenthesis
+     *
+     * @return {jQuery.Promise} - The promise will not complete until the
+     *      hint has completed. Returns null, if the function hint is already
+     *      displayed or there is no function hint at the cursor.
+     */
+    function popUpHintAtOpenParen() {
+        var functionInfo = session.getFunctionInfo();
+        if (functionInfo.inFunctionCall) {
+            var token = session.getToken();
+            
+            if (token && token.string === "(") {
+                return popUpHint();
+            }
+        } else {
+            dismissHint();
+        }
+        
+        return null;
+    }
+    
+    /**
      *  Show the parameter the cursor is on in bold when the cursor moves.
      *  Dismiss the pop up when the cursor moves off the function.
      */
@@ -411,6 +435,7 @@ define(function (require, exports, module) {
     exports.installListeners        = installListeners;
     exports.isHintDisplayed         = isHintDisplayed;
     exports.popUpHint               = popUpHint;
+    exports.popUpHintAtOpenParen    = popUpHintAtOpenParen;
     exports.setSession              = setSession;
     exports.startCursorTracking     = startCursorTracking;
     exports.stopCursorTracking      = stopCursorTracking;

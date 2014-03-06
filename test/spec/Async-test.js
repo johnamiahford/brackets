@@ -22,7 +22,7 @@
  */
 
 /*jslint vars: true, plusplus: true, devel: true, browser: true, nomen: true, indent: 4, maxerr: 50 */
-/*global define, describe, beforeEach, afterEach, it, runs, waits, waitsFor, waitsForDone, expect, $  */
+/*global define, describe, beforeEach, afterEach, it, runs, waits, waitsFor, waitsForDone, expect, $, jasmine  */
 
 define(function (require, exports, module) {
     "use strict";
@@ -304,7 +304,8 @@ define(function (require, exports, module) {
             });
                         
         });
-    
+        
+        
         describe("Async PromiseQueue", function () {
             var queue, calledFns;
             

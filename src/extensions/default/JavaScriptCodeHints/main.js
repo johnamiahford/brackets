@@ -26,6 +26,8 @@
 
 define(function (require, exports, module) {
     "use strict";
+    
+    var _ = brackets.getModule("thirdparty/lodash");
 
     var CodeHintManager      = brackets.getModule("editor/CodeHintManager"),
         EditorManager        = brackets.getModule("editor/EditorManager"),
@@ -36,7 +38,6 @@ define(function (require, exports, module) {
         AppInit              = brackets.getModule("utils/AppInit"),
         ExtensionUtils       = brackets.getModule("utils/ExtensionUtils"),
         PerfUtils            = brackets.getModule("utils/PerfUtils"),
-        StringUtils          = brackets.getModule("utils/StringUtils"),
         StringMatch          = brackets.getModule("utils/StringMatch"),
         LanguageManager      = brackets.getModule("language/LanguageManager"),
         ProjectManager       = brackets.getModule("project/ProjectManager"),
@@ -53,6 +54,27 @@ define(function (require, exports, module) {
         cachedToken  = null,  // the token used in the current hinting session
         matcher      = null,  // string matcher for hints
         ignoreChange;         // can ignore next "change" event if true;
+
+    /**
+     * Sets the configuration, generally for testing/debugging use.
+     * Configuration keys are merged into the current configuration.
+     * The Tern worker is automatically updated to the new config as well.
+     *
+     * * debug: Set to true if you want verbose logging
+     * * noReset: Set to true if you don't want the worker to restart periodically
+     *
+     * @param {Object} configUpdate keys/values to merge into the config
+     */
+    function setConfig(configUpdate) {
+        var config = setConfig.config;
+        Object.keys(configUpdate).forEach(function (key) {
+            config[key] = configUpdate[key];
+        });
+        
+        ScopeManager._setConfig(configUpdate);
+    }
+    
+    setConfig.config = {};
 
     /**
      *  Get the value of current session.
@@ -78,6 +100,10 @@ define(function (require, exports, module) {
         var trimmedQuery,
             formattedHints;
 
+        if (setConfig.config.debug) {
+            console.debug("Hints", _.pluck(hints, "label"));
+        }
+        
         /*
          * Returns a formatted list of hints with the query substring
          * highlighted.
@@ -85,8 +111,11 @@ define(function (require, exports, module) {
          * @param {Array.<Object>} hints - the list of hints to format
          * @param {string} query - querystring used for highlighting matched
          *      poritions of each hint
-         * @return {Array.<jQuery.Object>} - array of hints formatted as jQuery
-         *      objects
+         * @return {jQuery.Deferred|{
+         *              hints: Array.<string|jQueryObject>,
+         *              match: string,
+         *              selectInitial: boolean,
+         *              handleWideResults: boolean}}
          */
         function formatHints(hints, query) {
             return hints.map(function (token) {
@@ -128,10 +157,10 @@ define(function (require, exports, module) {
                     token.stringRanges.forEach(function (item) {
                         if (item.matched) {
                             $hintObj.append($("<span>")
-                                .append(StringUtils.htmlEscape(item.text))
+                                .append(_.escape(item.text))
                                 .addClass("matched-hint"));
                         } else {
-                            $hintObj.append(StringUtils.htmlEscape(item.text));
+                            $hintObj.append(_.escape(item.text));
                         }
                     });
                 } else {
@@ -429,16 +458,24 @@ define(function (require, exports, module) {
                 }
 
                 var scopeResponse   = ScopeManager.requestHints(session, session.editor.document),
-                    $deferredHints = $.Deferred();
+                    $deferredHints  = $.Deferred(),
+                    scopeSession    = session;
 
                 scopeResponse.done(function () {
                     if (hintsArePending($deferredHints)) {
-                        getSessionHints(query, cursor, type, token, $deferredHints);
+                        // Verify we are still in same session
+                        if (scopeSession === session) {
+                            getSessionHints(query, cursor, type, token, $deferredHints);
+                        } else {
+                            $deferredHints.reject();
+                        }
                     }
+                    scopeSession = null;
                 }).fail(function () {
                     if (hintsArePending($deferredHints)) {
                         $deferredHints.reject();
                     }
+                    scopeSession = null;
                 });
 
                 return $deferredHints;
@@ -467,8 +504,7 @@ define(function (require, exports, module) {
             query       = session.getQuery(),
             start       = {line: cursor.line, ch: cursor.ch - query.length},
             end         = {line: cursor.line, ch: cursor.ch},
-            invalidPropertyName = false,
-            displayFunctionHint = false;
+            invalidPropertyName = false;
 
         if (session.getType().property) {
             // if we're inserting a property name, we need to make sure the 
@@ -503,39 +539,12 @@ define(function (require, exports, module) {
             }
         }
 
-        // If the completion is for a valid function, then append
-        // "()" to the function name.
-        if (!invalidPropertyName && /^fn\(/.test(hint.type)) {
-            completion = completion.concat("()");
-            displayFunctionHint = true;
-        }
-
         // Replace the current token with the completion
         // HACK (tracking adobe/brackets#1688): We talk to the private CodeMirror instance
         // directly to replace the range instead of using the Document, as we should. The
         // reason is due to a flaw in our current document synchronization architecture when
         // inline editors are open.
         session.editor._codeMirror.replaceRange(completion, start, end);
-
-        // If displaying a function hint, move the cursor inside the "()".
-        // Then pop-up a function hint.
-        if (displayFunctionHint) {
-            var pos = {line: start.line, ch: start.ch + completion.length - 1};
-
-            // stop cursor tracking before setting the cursor to avoid bringing
-            // down the current hint.
-            if (ParameterHintManager.isHintDisplayed()) {
-                ParameterHintManager.stopCursorTracking(session);
-            }
-
-            session.editor._codeMirror.setCursor(pos);
-
-            if (ParameterHintManager.isHintDisplayed()) {
-                ParameterHintManager.startCursorTracking(session);
-            }
-
-            ParameterHintManager.popUpHint(ParameterHintManager.PUSH_EXISTING_HINT);
-        }
 
         // Return false to indicate that another hinting session is not needed
         return false;
@@ -576,6 +585,7 @@ define(function (require, exports, module) {
                     .on(HintUtils.eventName("change"), function (event, editor, changeList) {
                         if (!ignoreChange) {
                             ScopeManager.handleFileChange(changeList);
+                            ParameterHintManager.popUpHintAtOpenParen();
                         }
                         ignoreChange = false;
                     });
@@ -593,8 +603,10 @@ define(function (require, exports, module) {
          *      for changes
          */
         function uninstallEditorListeners(editor) {
-            $(editor)
-                .off(HintUtils.eventName("change"));
+            if (editor) {
+                $(editor)
+                    .off(HintUtils.eventName("change"));
+            }
         }
 
         /*
@@ -760,9 +772,12 @@ define(function (require, exports, module) {
 
             return response;
         }
-
+        
         // Register quickEditHelper.
         brackets._jsCodeHintsHelper = quickEditHelper;
+        
+        // Configuration function used for debugging
+        brackets._configureJSCodeHints = setConfig;
   
         ExtensionUtils.loadStyleSheet(module, "styles/brackets-js-hints.css");
         

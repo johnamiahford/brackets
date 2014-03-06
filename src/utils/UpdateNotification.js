@@ -1,24 +1,24 @@
 /*
  * Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
- *  
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- *  
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *  
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * 
+ *
  */
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
@@ -33,40 +33,41 @@ define(function (require, exports, module) {
     
     var Dialogs              = require("widgets/Dialogs"),
         DefaultDialogs       = require("widgets/DefaultDialogs"),
-        NativeApp            = require("utils/NativeApp"),
         PreferencesManager   = require("preferences/PreferencesManager"),
-        Strings              = require("strings"),
-        StringUtils          = require("utils/StringUtils"),
         Global               = require("utils/Global"),
+        NativeApp            = require("utils/NativeApp"),
+        StringUtils          = require("utils/StringUtils"),
+        Strings              = require("strings"),
         UpdateDialogTemplate = require("text!htmlContent/update-dialog.html"),
         UpdateListTemplate   = require("text!htmlContent/update-list.html");
-    
-    var defaultPrefs = {lastNotifiedBuildNumber: 0};
-    
     
     // Extract current build number from package.json version field 0.0.0-0
     var _buildNumber = Number(/-([0-9]+)/.exec(brackets.metadata.version)[1]);
     
-    // PreferenceStorage
-    var _prefs = PreferencesManager.getPreferenceStorage(module, defaultPrefs);
-    //TODO: Remove preferences migration code
-    PreferencesManager.handleClientIdChange(_prefs, module.id);
+    // Init default last build number
+    PreferencesManager.stateManager.definePreference("lastNotifiedBuildNumber", "number", 0);
+
+    PreferencesManager.convertPreferences(module, {
+        "lastNotifiedBuildNumber": "user",
+        "lastInfoURLFetchTime": "user",
+        "updateInfo": "user"
+    }, true);
     
     // This is the last version we notified the user about. If checkForUpdate()
     // is called with "false", only show the update notification dialog if there
     // is an update newer than this one. This value is saved in preferences.
-    var _lastNotifiedBuildNumber = _prefs.getValue("lastNotifiedBuildNumber");
+    var _lastNotifiedBuildNumber = PreferencesManager.getViewState("lastNotifiedBuildNumber");
     
     // Last time the versionInfoURL was fetched
-    var _lastInfoURLFetchTime = _prefs.getValue("lastInfoURLFetchTime");
+    var _lastInfoURLFetchTime = PreferencesManager.getViewState("lastInfoURLFetchTime");
 
-    // URL to load version info from. By default this is loaded no more than once a day. If 
+    // URL to load version info from. By default this is loaded no more than once a day. If
     // you force an update check it is always loaded.
     
     // URL to fetch the version information.
     var _versionInfoURL;
     
-    // Information on all posted builds of Brackets. This is an Array, where each element is 
+    // Information on all posted builds of Brackets. This is an Array, where each element is
     // an Object with the following fields:
     //
     //  {Number} buildNumber Number of the build
@@ -91,7 +92,7 @@ define(function (require, exports, module) {
      *
      * If force is true, the information is always fetched from _versionInfoURL.
      * If force is false, we try to use cached information. If more than
-     * 24 hours have passed since the last fetch, or if cached data can't be found, 
+     * 24 hours have passed since the last fetch, or if cached data can't be found,
      * the data is fetched again.
      *
      * If new data is fetched and dontCache is false, the data is saved in preferences
@@ -108,7 +109,7 @@ define(function (require, exports, module) {
         }
         
         // If we don't have data saved in prefs, fetch
-        data = _prefs.getValue("updateInfo");
+        data = PreferencesManager.getViewState("updateInfo");
         if (!data) {
             fetchData = true;
         }
@@ -128,8 +129,8 @@ define(function (require, exports, module) {
                             data = JSON.parse(jqXHR.responseText);
                             if (!dontCache) {
                                 _lastInfoURLFetchTime = (new Date()).getTime();
-                                _prefs.setValue("lastInfoURLFetchTime", _lastInfoURLFetchTime);
-                                _prefs.setValue("updateInfo", data);
+                                PreferencesManager.setViewState("lastInfoURLFetchTime", _lastInfoURLFetchTime);
+                                PreferencesManager.setViewState("updateInfo", data);
                             }
                             result.resolve(data);
                         } catch (e) {
@@ -140,7 +141,7 @@ define(function (require, exports, module) {
                     }
                 },
                 error: function (jqXHR, status, error) {
-                    // When loading data for unit tests, the error handler is 
+                    // When loading data for unit tests, the error handler is
                     // called but the responseText is valid. Try to use it here,
                     // but *don't* save the results in prefs.
                     
@@ -191,7 +192,7 @@ define(function (require, exports, module) {
     }
     
     /**
-     * Show a dialog that shows the update 
+     * Show a dialog that shows the update
      */
     function _showUpdateNotificationDialog(updates) {
         Dialogs.showModalDialogUsingTemplate(Mustache.render(UpdateDialogTemplate, Strings))
@@ -208,24 +209,13 @@ define(function (require, exports, module) {
         
         updates.Strings = Strings;
         $updateList.html(Mustache.render(UpdateListTemplate, updates));
-        
-        $dlg.on("click", "a", function (e) {
-            var url = $(e.currentTarget).attr("data-url");
-            
-            if (url) {
-                // Make sure the URL has a domain that we know about
-                if (/(brackets\.io|github\.com|adobe\.com)$/i.test(PathUtils.parseUrl(url).hostname)) {
-                    NativeApp.openURLInDefaultBrowser(url);
-                }
-            }
-        });
     }
     
     /**
-     * Check for updates. If "force" is true, update notification dialogs are always displayed 
-     * (if an update is available). If "force" is false, the update notification is only 
+     * Check for updates. If "force" is true, update notification dialogs are always displayed
+     * (if an update is available). If "force" is false, the update notification is only
      * displayed for newly available updates.
-     * 
+     *
      * If an update is available, show the "update available" notification icon in the title bar.
      *
      * @param {boolean} force If true, always show the notification dialog.
@@ -268,7 +258,7 @@ define(function (require, exports, module) {
                 // Get all available updates
                 var allUpdates = _stripOldVersionInfo(versionInfo, _buildNumber);
                 
-                // When running directly from GitHub source (as opposed to 
+                // When running directly from GitHub source (as opposed to
                 // an installed build), _buildNumber is 0. In this case, if the
                 // test is not forced, don't show the update notification icon or
                 // dialog.
@@ -289,7 +279,7 @@ define(function (require, exports, module) {
                         });
                     }
                 
-                    // Only show the update dialog if force = true, or if the user hasn't been 
+                    // Only show the update dialog if force = true, or if the user hasn't been
                     // alerted of this update
                     if (force || allUpdates[0].buildNumber >  _lastNotifiedBuildNumber) {
                         _showUpdateNotificationDialog(allUpdates);
@@ -298,7 +288,7 @@ define(function (require, exports, module) {
                         _lastNotifiedBuildNumber = allUpdates[0].buildNumber;
                         // Don't save prefs is we have overridden values
                         if (!usingOverrides) {
-                            _prefs.setValue("lastNotifiedBuildNumber", _lastNotifiedBuildNumber);
+                            PreferencesManager.setViewState("lastNotifiedBuildNumber", _lastNotifiedBuildNumber);
                         }
                     }
                 } else if (force) {
@@ -340,7 +330,7 @@ define(function (require, exports, module) {
     
     // Append locale to version info URL
     _versionInfoURL = brackets.config.update_info_url + brackets.getLocale() + ".json";
-    
+
     // Define public API
     exports.checkForUpdate = checkForUpdate;
 });

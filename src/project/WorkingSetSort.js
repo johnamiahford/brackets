@@ -1,24 +1,24 @@
 /*
  * Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
- *  
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- *  
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *  
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * 
+ *
  */
 
 
@@ -43,12 +43,6 @@ define(function (require, exports, module) {
         currentSort:   Commands.SORT_WORKINGSET_BY_ADDED,
         automaticSort: false
     };
-    
-    /**
-     * @private
-     * @type {PreferenceStorage}
-     */
-    var _prefs = {};
     
     /**
      * @private
@@ -116,7 +110,7 @@ define(function (require, exports, module) {
      */
     function setAutomatic(enable) {
         _automaticSort = enable;
-        _prefs.setValue("automaticSort", _automaticSort);
+        PreferencesManager.setViewState("automaticSort", _automaticSort);
         CommandManager.get(Commands.SORT_WORKINGSET_AUTO).setChecked(_automaticSort);
         
         if (enable) {
@@ -164,7 +158,7 @@ define(function (require, exports, module) {
             
             CommandManager.get(Commands.SORT_WORKINGSET_AUTO).setEnabled(!!newSort.getEvents());
             _currentSort = newSort;
-            _prefs.setValue("currentSort", _currentSort.getCommandID());
+            PreferencesManager.setViewState("currentSort", _currentSort.getCommandID());
         }
     }
     
@@ -174,7 +168,7 @@ define(function (require, exports, module) {
      * @private
      *
      * @param {string} commandID A valid command identifier.
-     * @param {function(FileEntry, FileEntry): number} compareFn A valid sort
+     * @param {function(File, File): number} compareFn A valid sort
      *      function (see register for a longer explanation).
      * @param {string} events Space-separated DocumentManager possible events
      *      ending with ".sort".
@@ -190,7 +184,7 @@ define(function (require, exports, module) {
         return this._commandID;
     };
     
-    /** @return {function(FileEntry, FileEntry): number} The compare function */
+    /** @return {function(File, File): number} The compare function */
     Sort.prototype.getCompareFn = function () {
         return this._compareFn;
     };
@@ -223,7 +217,7 @@ define(function (require, exports, module) {
     /**
      * Registers a working set sort method.
      * @param {(string|Command)} command A command ID or a command object
-     * @param {function(FileEntry, FileEntry): number} compareFn The function that
+     * @param {function(File, File): number} compareFn The function that
      *      will be used inside JavaScript's sort function. The return a value
      *      should be >0 (sort a to a lower index than b), =0 (leaves a and b
      *      unchanged with respect to each other) or <0 (sort b to a lower index
@@ -321,15 +315,16 @@ define(function (require, exports, module) {
     CommandManager.register(Strings.CMD_SORT_WORKINGSET_AUTO,     Commands.SORT_WORKINGSET_AUTO,     _handleAutomaticSort);
     
     
-    // Initialize PreferenceStorage
-    _prefs = PreferencesManager.getPreferenceStorage(module, defaultPrefs);
-    //TODO: Remove preferences migration code
-    PreferencesManager.handleClientIdChange(_prefs, "com.adobe.brackets.WorkingSetSort");
+    // Initialize default values for sorting preferences
+    PreferencesManager.stateManager.definePreference("currentSort", "string", Commands.SORT_WORKINGSET_BY_ADDED);
+    PreferencesManager.stateManager.definePreference("automaticSort", "boolean", false);
+    
+    PreferencesManager.convertPreferences(module, {"currentSort": "user", "automaticSort": "user"}, true);
     
     // Initialize items dependent on extensions/workingSet
     AppInit.appReady(function () {
-        var curSort  = get(_prefs.getValue("currentSort")),
-            autoSort = _prefs.getValue("automaticSort");
+        var curSort  = get(PreferencesManager.getViewState("currentSort")),
+            autoSort = PreferencesManager.getViewState("automaticSort");
         
         if (curSort) {
             _setCurrentSort(curSort);
