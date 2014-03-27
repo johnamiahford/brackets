@@ -23,12 +23,13 @@
 
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
-/*global define, $, CodeMirror */
+/*global define, $ */
 
 define(function (require, exports, module) {
     "use strict";
     
-    var TokenUtils = require("utils/TokenUtils");
+    var CodeMirror = require("thirdparty/CodeMirror2/lib/codemirror"),
+        TokenUtils = require("utils/TokenUtils");
     
     //constants
     var TAG_NAME = "tagName",
@@ -292,7 +293,7 @@ define(function (require, exports, module) {
      *      className:string    string:""open-files-disclosure-arrow""
      *      className:tag       string:"></span>"
      * @param {Editor} editor An instance of a Brackets editor
-     * @param {{ch: number, line: number}} constPos  A CM pos (likely from editor.getCursor())
+     * @param {{ch: number, line: number}} constPos  A CM pos (likely from editor.getCursorPos())
      * @return {{tagName:string,
      *           attr:{name:string, value:string, valueAssigned:boolean, quoteChar:string, hasEndQuote:boolean},
      *           position:{tokenType:string, offset:number}
@@ -484,7 +485,8 @@ define(function (require, exports, module) {
             currentBlock = null,
             inBlock = false,
             outerMode = editor._codeMirror.getMode(),
-            tokenModeName;
+            tokenModeName,
+            previousMode;
         
         while (TokenUtils.moveNextToken(ctx, false)) {
             tokenModeName = CodeMirror.innerMode(outerMode, ctx.token.state).mode.name;
@@ -494,7 +496,7 @@ define(function (require, exports, module) {
                     currentBlock.end = currentBlock.start;
                 }
                 // Check for end of this block
-                if (tokenModeName !== modeName) {
+                if (tokenModeName === previousMode) {
                     // currentBlock.end is already set to pos of the last token by now
                     currentBlock.text = editor.document.getRange(currentBlock.start, currentBlock.end);
                     inBlock = false;
@@ -509,6 +511,8 @@ define(function (require, exports, module) {
                     };
                     blocks.push(currentBlock);
                     inBlock = true;
+                } else {
+                    previousMode = tokenModeName;
                 }
                 // else, random token: ignore
             }

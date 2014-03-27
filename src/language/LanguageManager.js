@@ -23,7 +23,7 @@
 
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
-/*global define, $, CodeMirror */
+/*global define, $ */
 
 /**
  * LanguageManager provides access to the languages supported by Brackets
@@ -114,7 +114,8 @@ define(function (require, exports, module) {
     
     
     // Dependencies
-    var Async                 = require("utils/Async"),
+    var CodeMirror            = require("thirdparty/CodeMirror2/lib/codemirror"),
+        Async                 = require("utils/Async"),
         FileUtils             = require("file/FileUtils"),
         _defaultLanguagesJSON = require("text!language/languages.json");
     
@@ -195,6 +196,15 @@ define(function (require, exports, module) {
         return _languages[id];
     }
     
+    /**
+     * Resolves a language to a file extension
+     * @param {!string} extension Extension that language should be resolved for
+     * @return {?Language} The language for the provided extension or null if none exists
+     */
+    function getLanguageForExtension(extension) {
+        return _fileExtensionToLanguageMap[extension.toLowerCase()];
+    }
+
     /**
      * Resolves a file path to a Language object.
      * @param {!string} path Path to the file to find a language for
@@ -803,5 +813,6 @@ define(function (require, exports, module) {
     exports.ready                   = _ready;
     exports.defineLanguage          = defineLanguage;
     exports.getLanguage             = getLanguage;
+    exports.getLanguageForExtension = getLanguageForExtension;
     exports.getLanguageForPath      = getLanguageForPath;
 });

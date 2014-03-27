@@ -75,6 +75,11 @@ define(function (require, exports, module) {
         FileSyncManager     = require("project/FileSyncManager"),
         EditorManager       = require("editor/EditorManager");
     
+    
+    // Define the preference to decide how to sort the Project Tree files
+    PreferencesManager.definePreference("sortDirectoriesFirst", "boolean", brackets.platform !== "mac");
+    
+    
     /**
      * @private
      * Forward declaration for the _fileSystemChange and _fileSystemRename functions to make JSLint happy.
@@ -86,9 +91,8 @@ define(function (require, exports, module) {
      * @private
      * File tree sorting for mac-specific sorting behavior
      */
-    var _isMac          = brackets.platform === "mac",
-        _sortPrefixDir  = _isMac ? "" : "0",
-        _sortPrefixFile = _isMac ? "" : "1";
+    var _sortPrefixDir,
+        _sortPrefixFile;
     
     /**
      * @private
@@ -99,7 +103,7 @@ define(function (require, exports, module) {
      *    https://github.com/adobe/brackets/issues/6781
      * @type {RegExp}
      */
-    var _exclusionListRegEx = /\.pyc$|^\.git$|^\.gitmodules$|^\.svn$|^\.DS_Store$|^Thumbs\.db$|^\.hg$|^CVS$|^\.hgtags$|^\.c9revisions|^\.SyncArchive|^\.SyncID|^\.SyncIgnore|\~$/;
+    var _exclusionListRegEx = /\.pyc$|^\.git$|^\.gitmodules$|^\.svn$|^\.DS_Store$|^Thumbs\.db$|^\.hg$|^CVS$|^\.hgtags$|^\.idea$|^\.c9revisions$|^\.SyncArchive$|^\.SyncID$|^\.SyncIgnore$|\~$/;
 
     /**
      * @private
@@ -196,6 +200,28 @@ define(function (require, exports, module) {
      * ProjectManager.getAllFiles().
      */
     var _allFilesCachePromise = null;
+    
+    /**
+     * @private
+     * @type {boolean}
+     * Current sort order for the tree, true if directories are first. This is
+     * initialized in _generateSortPrefixes.
+     */
+    var _dirFirst;
+    
+    /**
+     * @private
+     * Generates the prefixes used for sorting the files in the project tree
+     * @return {boolean} true if the sort prefixes have changed
+     */
+    function _generateSortPrefixes() {
+        var previousDirFirst  = _dirFirst;
+        _dirFirst             = PreferencesManager.get("sortDirectoriesFirst");
+        _sortPrefixDir        = _dirFirst ? "0" : "";
+        _sortPrefixFile       = _dirFirst ? "1" : "";
+        
+        return previousDirFirst !== _dirFirst;
+    }
     
     /**
      * @private
@@ -644,7 +670,50 @@ define(function (require, exports, module) {
             // install scroller shadows
             ViewUtils.addScrollerShadow(_projectTree.get(0));
             
+            var findEventHandler = function (type, namespace, selector) {
+                var events        = $._data(_projectTree[0], "events"),
+                    eventsForType = events ? events[type] : null,
+                    event         = eventsForType ? _.find(eventsForType, function (e) {
+                                        return e.namespace === namespace && e.selector === selector;
+                                    }) : null,
+                    eventHandler  = event ? event.handler : null;
+                if (!eventHandler) {
+                    console.error(type + "." + namespace + " " + selector + " handler not found!");
+                }
+                return eventHandler;
+            };
+            var createCustomHandler = function(originalHandler) {
+                return function (event) {
+                    var $node = $(event.target).parent("li"),
+                        methodName;
+                    if (event.ctrlKey || event.metaKey) {
+                        if (event.altKey) {
+                            // collapse subtree
+                            // note: expanding using open_all is a bad idea due to poor performance
+                            methodName = $node.is(".jstree-open") ? "close_all" : "open_node";
+                            _projectTree.jstree(methodName, $node);
+                            return;
+                        } else {
+                            // toggle siblings
+                            methodName = $node.is(".jstree-open") ? "close_node" : "open_node";
+                            $node.parent().children("li").each(function () {
+                                _projectTree.jstree(methodName, $(this));
+                            });
+                            return;
+                        }
+                    }
+                    // original behaviour
+                    originalHandler.apply(this, arguments);
+                };
+            };
+            var originalHrefHandler = findEventHandler("click", "jstree", "a");
+            var originalInsHandler = findEventHandler("click", "jstree", "li > ins");
+
             _projectTree
+                .off("click.jstree", "a")
+                .on("click.jstree", "a", createCustomHandler(originalHrefHandler))
+                .off("click.jstree", "li > ins")
+                .on("click.jstree", "li > ins", createCustomHandler(originalInsHandler))
                 .unbind("dblclick.jstree")
                 .bind("dblclick.jstree", function (event) {
                     var entry = $(event.target).closest("li").data("entry");
@@ -697,7 +766,7 @@ define(function (require, exports, module) {
      * @return {string}
      */
     function _toCompareString(name, isFolder) {
-        return ((isFolder) ? _sortPrefixDir : _sortPrefixFile) + name;
+        return (isFolder ? _sortPrefixDir : _sortPrefixFile) + name;
     }
     
     /**
@@ -1058,7 +1127,7 @@ define(function (require, exports, module) {
             };
 
             if (!isUpdating) {
-                PreferencesManager.projectLayer.setProjectPath(rootPath);
+                PreferencesManager._stateProjectLayer.setProjectPath(rootPath);
             }
             
             // restore project tree state from last time this project was open
@@ -1781,8 +1850,17 @@ define(function (require, exports, module) {
                 
                 // Since html_titles are enabled, we have to reset the text without markup.
                 // And we also need to explicitly escape all html-sensitive characters.
-                _projectTree.jstree("set_text", $selected, _.escape(entry.name));
+                var escapedName = _.escape(entry.name);
+                _projectTree.jstree("set_text", $selected, escapedName);
                 _projectTree.jstree("rename");
+
+                var extension = FileUtils.getSmartFileExtension(entry.name);
+                if (extension) {
+                    var indexOfExtension = escapedName.length - extension.length - 1;
+                    if (indexOfExtension > 0) {
+                        $selected.children(".jstree-rename-input")[0].setSelectionRange(0, indexOfExtension);
+                    }
+                }
             });
         // No fail handler: silently no-op if file doesn't exist in tree
     }
@@ -2115,6 +2193,8 @@ define(function (require, exports, module) {
         DocumentManager.notifyPathNameChanged(oldName, newName);
     };
     
+    
+    
     // Initialize variables and listeners that depend on the HTML DOM
     AppInit.htmlReady(function () {
         $projectTreeContainer = $("#project-files-container");
@@ -2187,6 +2267,14 @@ define(function (require, exports, module) {
     
     $(exports).on("projectOpen", _reloadProjectPreferencesScope);
     
+    // Initialize the sort prefixes and make sure to change them when the sort pref changes
+    _generateSortPrefixes();
+    PreferencesManager.on("change", "sortDirectoriesFirst", function () {
+        if (_generateSortPrefixes()) {
+            refreshFileTree();
+        }
+    });
+    
     // Event Handlers
     $(FileViewController).on("documentSelectionFocusChange", _documentSelectionFocusChange);
     $(FileViewController).on("fileViewFocusChange", _fileViewFocusChange);
@@ -2195,7 +2283,7 @@ define(function (require, exports, module) {
     // Commands
     CommandManager.register(Strings.CMD_OPEN_FOLDER,      Commands.FILE_OPEN_FOLDER,      openProject);
     CommandManager.register(Strings.CMD_PROJECT_SETTINGS, Commands.FILE_PROJECT_SETTINGS, _projectSettings);
-    CommandManager.register(Strings.CMD_FILE_REFRESH,     Commands.FILE_REFRESH, refreshFileTree);
+    CommandManager.register(Strings.CMD_FILE_REFRESH,     Commands.FILE_REFRESH,          refreshFileTree);
     
     // Init invalid characters string 
     if (brackets.platform === "mac") {
